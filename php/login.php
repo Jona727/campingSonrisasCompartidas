@@ -61,10 +61,10 @@ if ($resultado->num_rows > 0) {
             echo json_encode(["success" => true, "redirect" => "index.php"]);
         }
     } else {
-        echo json_encode(["success" => false, "message" => "Contraseña incorrecta."]);
+        echo json_encode(["success" => false, "message" => "Usuario o contraseña incorrectos."]);
     }
 } else {
-    echo json_encode(["success" => false, "message" => "Usuario no encontrado."]);
+    echo json_encode(["success" => false, "message" => "Usuario o contraseña incorrectos."]);
 }
 
 $stmt->close();
