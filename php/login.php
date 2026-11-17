@@ -36,16 +36,31 @@ $resultado = $stmt->get_result();
 if ($resultado->num_rows > 0) {
     $usuario_db = $resultado->fetch_assoc();
 
-    // Verificar contraseña (soporta tanto hashed como texto plano)
+    // Verificar contraseña
     $password_valida = false;
+    $hash_guardado = (string)$usuario_db['password'];
 
-    // Intentar primero con password_verify (para contraseñas hasheadas)
-    if (password_verify($contraseña, $usuario_db['password'])) {
+    if (password_get_info($hash_guardado)['algo'] !== null) {
+        // Contraseña almacenada como hash: verificación normal
+        $password_valida = password_verify($contraseña, $hash_guardado);
+
+        // Actualizar el hash si el algoritmo por defecto de PHP mejoró
+        if ($password_valida && password_needs_rehash($hash_guardado, PASSWORD_DEFAULT)) {
+            $nuevo_hash = password_hash($contraseña, PASSWORD_DEFAULT);
+            $up = $conn->prepare("UPDATE usuarios SET password = ? WHERE id = ?");
+            $up->bind_param("si", $nuevo_hash, $usuario_db['id']);
+            $up->execute();
+            $up->close();
+        }
+    } elseif (hash_equals($hash_guardado, $contraseña)) {
+        // MIGRACIÓN ÚNICA: la contraseña estaba guardada en texto plano.
+        // Se acepta esta vez y se convierte a hash de inmediato.
         $password_valida = true;
-    }
-    // Si falla, comparar directamente (para contraseñas en texto plano)
-    elseif ($contraseña === $usuario_db['password']) {
-        $password_valida = true;
+        $nuevo_hash = password_hash($contraseña, PASSWORD_DEFAULT);
+        $up = $conn->prepare("UPDATE usuarios SET password = ? WHERE id = ?");
+        $up->bind_param("si", $nuevo_hash, $usuario_db['id']);
+        $up->execute();
+        $up->close();
     }
 
     if ($password_valida) {
@@ -61,10 +76,10 @@ if ($resultado->num_rows > 0) {
             echo json_encode(["success" => true, "redirect" => "index.php"]);
         }
     } else {
-        echo json_encode(["success" => false, "message" => "Contraseña incorrecta."]);
+        echo json_encode(["success" => false, "message" => "Usuario o contraseña incorrectos."]);
     }
 } else {
-    echo json_encode(["success" => false, "message" => "Usuario no encontrado."]);
+    echo json_encode(["success" => false, "message" => "Usuario o contraseña incorrectos."]);
 }
 
 $stmt->close();
