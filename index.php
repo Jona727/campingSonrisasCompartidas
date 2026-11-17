@@ -1,5 +1,7 @@
 <?php
-session_start();
+require_once __DIR__ . '/php/seguridad.php';
+iniciar_sesion_segura();
+require_once __DIR__ . '/php/precios.php';
 
 // Verificar si el usuario está autenticado
 if (!isset($_SESSION['usuario_id'])) {
@@ -17,6 +19,7 @@ $esAdmin = (isset($_SESSION['rol']) && $_SESSION['rol'] === 'administrador');
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="<?php echo htmlspecialchars(csrf_token(), ENT_QUOTES, 'UTF-8'); ?>">
     <title>Punto de Venta - Camping Sonrisas</title>
     <!-- Google Fonts: Outfit -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -25,7 +28,7 @@ $esAdmin = (isset($_SESSION['rol']) && $_SESSION['rol'] === 'administrador');
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Estilos personalizados -->
-    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="<?php echo asset('css/styles.css'); ?>">
     <style>
         @media print {
             @page {
@@ -72,12 +75,12 @@ $esAdmin = (isset($_SESSION['rol']) && $_SESSION['rol'] === 'administrador');
                                     <div class="col-md-8">
                                         <label for="tipo-entrada" class="form-label fw-semibold text-gray-700">Tipo de Entrada</label>
                                         <select class="form-select form-select-lg" id="tipo-entrada" name="tipo_entrada" required>
-                                            <option value="turista_adulto">No Residente (Adulto) - $8.000</option>
-                                            <option value="turista_niño">No Residente (Niño) - $4.000</option>
-                                            <option value="turista_jubilado">No Residente (Jubilado) - $4.800</option>
-                                            <option value="local_adulto">Residente (Adulto) - $4.000</option>
-                                            <option value="local_niño">Residente (Niño) - GRATIS</option>
-                                            <option value="local_jubilado">Residente (Jubilado) - $2.400</option>
+                                            <option value="turista_adulto">No Residente (Adulto) - <?php echo precio_ar('turista_adulto'); ?></option>
+                                            <option value="turista_niño">No Residente (Niño) - <?php echo precio_ar('turista_niño'); ?></option>
+                                            <option value="turista_jubilado">No Residente (Jubilado) - <?php echo precio_ar('turista_jubilado'); ?></option>
+                                            <option value="local_adulto">Residente (Adulto) - <?php echo precio_ar('local_adulto'); ?></option>
+                                            <option value="local_niño">Residente (Niño) - <?php echo precio_ar('local_niño'); ?></option>
+                                            <option value="local_jubilado">Residente (Jubilado) - <?php echo precio_ar('local_jubilado'); ?></option>
                                         </select>
                                     </div>
                                     <div class="col-md-4">
@@ -110,15 +113,15 @@ $esAdmin = (isset($_SESSION['rol']) && $_SESSION['rol'] === 'administrador');
                                                 <div class="list-group list-group-flush">
                                                     <button type="button" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center" onclick="seleccionarTarifa('turista_adulto')">
                                                         <span>Adulto</span>
-                                                        <span class="badge bg-brand-100 text-brand-700 rounded-pill">$8.000</span>
+                                                        <span class="badge bg-brand-100 text-brand-700 rounded-pill"><?php echo precio_ar('turista_adulto'); ?></span>
                                                     </button>
                                                     <button type="button" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center" onclick="seleccionarTarifa('turista_niño')">
                                                         <span>Niño</span>
-                                                        <span class="badge bg-success-100 text-success-700 rounded-pill">$4.000</span>
+                                                        <span class="badge bg-success-100 text-success-700 rounded-pill"><?php echo precio_ar('turista_niño'); ?></span>
                                                     </button>
                                                     <button type="button" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center" onclick="seleccionarTarifa('turista_jubilado')">
                                                         <span>Jubilado</span>
-                                                        <span class="badge bg-purple-100 text-purple-700 rounded-pill">$4.800</span>
+                                                        <span class="badge bg-purple-100 text-purple-700 rounded-pill"><?php echo precio_ar('turista_jubilado'); ?></span>
                                                     </button>
                                                 </div>
                                             </div>
@@ -136,15 +139,15 @@ $esAdmin = (isset($_SESSION['rol']) && $_SESSION['rol'] === 'administrador');
                                                 <div class="list-group list-group-flush">
                                                     <button type="button" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center" onclick="seleccionarTarifa('local_adulto')">
                                                         <span>Adulto</span>
-                                                        <span class="badge bg-warning-100 text-warning-700 rounded-pill">$4.000</span>
+                                                        <span class="badge bg-warning-100 text-warning-700 rounded-pill"><?php echo precio_ar('local_adulto'); ?></span>
                                                     </button>
                                                     <button type="button" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center" onclick="seleccionarTarifa('local_niño')">
                                                         <span>Niño</span>
-                                                        <span class="badge bg-green-100 text-green-700 rounded-pill">GRATIS</span>
+                                                        <span class="badge bg-green-100 text-green-700 rounded-pill"><?php echo precio_ar('local_niño'); ?></span>
                                                     </button>
                                                     <button type="button" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center" onclick="seleccionarTarifa('local_jubilado')">
                                                         <span>Jubilado</span>
-                                                        <span class="badge bg-orange-100 text-orange-700 rounded-pill">$2.400</span>
+                                                        <span class="badge bg-orange-100 text-orange-700 rounded-pill"><?php echo precio_ar('local_jubilado'); ?></span>
                                                     </button>
                                                 </div>
                                             </div>
@@ -166,7 +169,7 @@ $esAdmin = (isset($_SESSION['rol']) && $_SESSION['rol'] === 'administrador');
                                     <span id="total-items">0</span> items
                                 </p>
                             </div>
-                            <button id="btn-limpiar" class="btn btn-sm btn-light text-danger fw-medium" style="display: none;">
+                            <button id="btn-limpiar" type="button" class="btn btn-sm btn-light text-danger fw-medium" style="display: none;">
                                 Vaciar
                             </button>
                         </div>
@@ -211,7 +214,7 @@ $esAdmin = (isset($_SESSION['rol']) && $_SESSION['rol'] === 'administrador');
                     <div class="card border-0 shadow-sm" style="border-radius: 20px;">
                         <div class="card-header bg-white border-bottom-0 pt-4 px-4 pb-0 d-flex justify-content-between align-items-center rounded-top-4">
                             <h3 class="card-title fw-bold text-gray-900 mb-0">Últimas Ventas</h3>
-                            <button class="btn btn-sm btn-icon-only btn-light text-primary" onclick="cargarUltimasEntradas()" title="Actualizar">
+                            <button class="btn btn-sm btn-icon-only btn-light text-primary" onclick="cargarUltimasEntradas()" title="Actualizar" aria-label="Actualizar últimas entradas">
                                 <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
                                 </svg>
@@ -288,7 +291,9 @@ $esAdmin = (isset($_SESSION['rol']) && $_SESSION['rol'] === 'administrador');
 
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="js/pos.js"></script>
+    <script>window.PRECIOS = <?php echo json_encode(precios_entradas(), JSON_UNESCAPED_UNICODE); ?>;</script>
+    <script src="<?php echo asset('js/utils.js'); ?>"></script>
+    <script src="<?php echo asset('js/pos.js'); ?>"></script>
     <script>
         // Helper inline para selección de tarifa rápida
         function seleccionarTarifa(tipo) {

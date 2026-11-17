@@ -163,6 +163,7 @@ a:hover{color:var(--accent-fg)}
   </main>
 </div>
 
+<script src="js/utils.js"></script>
 <script>
   const LOGIN_URL = 'php/login.php'; // dirección del servidor que verifica el login
   let DESPUES_DE_ENTRAR = 'index.php'; // el servidor indica el destino según el rol
@@ -178,6 +179,12 @@ a:hover{color:var(--accent-fg)}
   function mostrarError(texto) { errorBox.textContent = texto; errorBox.hidden = false; }
 
   // Bit saluda al abrir la página y después queda esperando.
+  // Si ya hay una sesión iniciada, ir directo al sistema
+  fetch('php/csrf.php', { credentials: 'same-origin', cache: 'no-store' })
+    .then(r => r.json())
+    .then(d => { if (d.autenticado && d.redirect) window.location.href = d.redirect; })
+    .catch(() => { /* sin conexión: se muestra el login normal */ });
+
   setTimeout(() => { if (bit.dataset.state === 'saludando') setBit('esperando'); }, 2500);
 
   email.addEventListener('focus', () => setBit('esperando'));
@@ -199,12 +206,8 @@ a:hover{color:var(--accent-fg)}
 
     let datos = null;
     try {
-      const respuesta = await fetch(LOGIN_URL, {
-        method: 'POST',
-        credentials: 'same-origin',
-        body: new FormData(form)
-      });
-      datos = await respuesta.json();
+      // postSeguro agrega el token de seguridad (CSRF) y devuelve el JSON
+      datos = await postSeguro(LOGIN_URL, new FormData(form));
     } catch {
       datos = null; // sin conexión o servidor caído
     }
@@ -218,7 +221,7 @@ a:hover{color:var(--accent-fg)}
 
     setBit('error');
     if (datos) {
-      mostrarError('Usuario o contraseña incorrectos.');
+      mostrarError(datos.message || 'Usuario o contraseña incorrectos.');
     } else {
       mostrarError('No pudimos conectar. Probá de nuevo en un momento.');
     }

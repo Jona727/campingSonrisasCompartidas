@@ -1,8 +1,15 @@
 <?php
-session_start();
+require_once __DIR__ . '/php/seguridad.php';
+iniciar_sesion_segura();
 
 if (!isset($_SESSION['usuario_id'])) {
     header("Location: login.html");
+    exit();
+}
+
+// Los reportes son solo para el administrador
+if (!es_administrador()) {
+    header("Location: index.php");
     exit();
 }
 
@@ -16,6 +23,7 @@ $esAdmin = (isset($_SESSION['rol']) && $_SESSION['rol'] === 'administrador');
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="<?php echo htmlspecialchars(csrf_token(), ENT_QUOTES, 'UTF-8'); ?>">
     <title>Reportes - Camping Sonrisas</title>
     <!-- Google Fonts: Outfit -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -24,11 +32,11 @@ $esAdmin = (isset($_SESSION['rol']) && $_SESSION['rol'] === 'administrador');
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Estilos personalizados -->
-    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="<?php echo asset('css/styles.css'); ?>">
     <!-- Chart.js -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
     <!-- jsPDF -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
 </head>
 <body>
     <?php include 'includes/sidebar.php'; ?>
@@ -224,6 +232,7 @@ $esAdmin = (isset($_SESSION['rol']) && $_SESSION['rol'] === 'administrador');
 
     <!-- JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="js/reportes.js?v=<?php echo time(); ?>"></script>
+    <script src="<?php echo asset('js/utils.js'); ?>"></script>
+    <script src="<?php echo asset('js/reportes.js'); ?>"></script>
 </body>
 </html>

@@ -1,29 +1,51 @@
 <?php
-// Disable HTML error output
+// No mostrar errores en pantalla y responder siempre JSON
 ini_set('display_errors', 0);
 error_reporting(E_ALL);
-
-// Set JSON header before any output
 header('Content-Type: application/json');
 
-session_start();
-require_once 'conexion.php';
+require_once __DIR__ . '/seguridad.php';
+iniciar_sesion_segura();
+require_once __DIR__ . '/conexion.php';
 
-// Validate POST data
-if (!isset($_POST['usuario']) || !isset($_POST['contraseña'])) {
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    http_response_code(405);
+    echo json_encode(["success" => false, "message" => "Método no permitido."]);
+    exit();
+}
+
+validar_csrf();
+
+// Validar datos recibidos
+if (!isset($_POST['usuario']) || !isset($_POST['contraseña'])
+    || !is_string($_POST['usuario']) || !is_string($_POST['contraseña'])) {
     echo json_encode(["success" => false, "message" => "Datos incompletos."]);
     exit();
 }
 
-// Obtener datos del formulario
-$usuario = $_POST['usuario'];
+$usuario = trim($_POST['usuario']);
 $contraseña = $_POST['contraseña'];
 
-// Consultar usuario en la base de datos
-$sql = "SELECT * FROM usuarios WHERE usuario = ?";
-$stmt = $conn->prepare($sql);
+// Límite de intentos fallidos por IP
+if (login_bloqueado($conn)) {
+    http_response_code(429);
+    echo json_encode([
+        "success" => false,
+        "message" => "Demasiados intentos fallidos. Esperá " . LOGIN_VENTANA_MINUTOS . " minutos e intentá de nuevo."
+    ]);
+    $conn->close();
+    exit();
+}
+
+$mensaje_error = "Usuario o contraseña incorrectos.";
+
+// Hash de relleno: así tarda lo mismo aunque el usuario no exista
+$hash_relleno = '$2y$10$usesomesillystringforsaleOaZ7cwq0aiRbPk2ZIbkXgjqCuzMEe';
+
+$stmt = $conn->prepare("SELECT id, usuario, password, nombre FROM usuarios WHERE usuario = ?");
 
 if (!$stmt) {
+    error_log('login.php prepare: ' . $conn->error);
     echo json_encode(["success" => false, "message" => "Error en la base de datos."]);
     $conn->close();
     exit();
@@ -32,41 +54,60 @@ if (!$stmt) {
 $stmt->bind_param("s", $usuario);
 $stmt->execute();
 $resultado = $stmt->get_result();
+$usuario_db = $resultado->fetch_assoc();
+$stmt->close();
 
-if ($resultado->num_rows > 0) {
-    $usuario_db = $resultado->fetch_assoc();
+$password_valida = false;
 
-    // Verificar contraseña (soporta tanto hashed como texto plano)
-    $password_valida = false;
+if ($usuario_db) {
+    $hash_guardado = (string)$usuario_db['password'];
 
-    // Intentar primero con password_verify (para contraseñas hasheadas)
-    if (password_verify($contraseña, $usuario_db['password'])) {
-        $password_valida = true;
-    }
-    // Si falla, comparar directamente (para contraseñas en texto plano)
-    elseif ($contraseña === $usuario_db['password']) {
-        $password_valida = true;
-    }
+    if (password_get_info($hash_guardado)['algo'] !== null) {
+        // Contraseña almacenada como hash: verificación normal
+        $password_valida = password_verify($contraseña, $hash_guardado);
 
-    if ($password_valida) {
-        // Iniciar sesión
-        $_SESSION['usuario_id'] = $usuario_db['id'];
-        $_SESSION['usuario'] = $usuario_db['usuario'];
-        $_SESSION['rol'] = strtolower($usuario_db['nombre']); // Convertir a minúsculas para compatibilidad
-
-        // Redirigir según el rol
-        if (strtolower($usuario_db['nombre']) === 'administrador') {
-            echo json_encode(["success" => true, "redirect" => "admin.php"]);
-        } else {
-            echo json_encode(["success" => true, "redirect" => "index.php"]);
+        // Actualizar el hash si el algoritmo por defecto de PHP mejoró
+        if ($password_valida && password_needs_rehash($hash_guardado, PASSWORD_DEFAULT)) {
+            $nuevo_hash = password_hash($contraseña, PASSWORD_DEFAULT);
+            $up = $conn->prepare("UPDATE usuarios SET password = ? WHERE id = ?");
+            $up->bind_param("si", $nuevo_hash, $usuario_db['id']);
+            $up->execute();
+            $up->close();
         }
-    } else {
-        echo json_encode(["success" => false, "message" => "Usuario o contraseña incorrectos."]);
+    } elseif (hash_equals($hash_guardado, $contraseña)) {
+        // MIGRACIÓN ÚNICA: la contraseña estaba guardada en texto plano.
+        // Se acepta esta vez y se convierte a hash de inmediato.
+        $password_valida = true;
+        $nuevo_hash = password_hash($contraseña, PASSWORD_DEFAULT);
+        $up = $conn->prepare("UPDATE usuarios SET password = ? WHERE id = ?");
+        $up->bind_param("si", $nuevo_hash, $usuario_db['id']);
+        $up->execute();
+        $up->close();
     }
 } else {
-    echo json_encode(["success" => false, "message" => "Usuario o contraseña incorrectos."]);
+    password_verify($contraseña, $hash_relleno);
 }
 
-$stmt->close();
+if (!$password_valida) {
+    login_registrar_fallo($conn, $usuario);
+    echo json_encode(["success" => false, "message" => $mensaje_error]);
+    $conn->close();
+    exit();
+}
+
+// Login correcto
+login_limpiar_fallos($conn);
+
+// Nuevo ID de sesión y nuevo token CSRF (evita fijación de sesión)
+session_regenerate_id(true);
+unset($_SESSION['csrf_token']);
+
+$_SESSION['usuario_id'] = $usuario_db['id'];
+$_SESSION['usuario'] = $usuario_db['usuario'];
+$_SESSION['rol'] = strtolower($usuario_db['nombre']); // El campo "nombre" se usa como rol
+$_SESSION['ultima_actividad'] = time();
+
+$redirect = ($_SESSION['rol'] === 'administrador') ? 'admin.php' : 'index.php';
+echo json_encode(["success" => true, "redirect" => $redirect]);
+
 $conn->close();
-?>

@@ -1,5 +1,6 @@
 <?php
-session_start();
+require_once __DIR__ . '/php/seguridad.php';
+iniciar_sesion_segura();
 
 if (!isset($_SESSION['usuario_id'])) {
     header("Location: login.html");
@@ -21,6 +22,7 @@ $esAdmin = true;
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="<?php echo htmlspecialchars(csrf_token(), ENT_QUOTES, 'UTF-8'); ?>">
     <title>Dashboard - Camping Sonrisas</title>
     <!-- Google Fonts: Outfit -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -29,9 +31,9 @@ $esAdmin = true;
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Estilos personalizados -->
-    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="<?php echo asset('css/styles.css'); ?>">
     <!-- Chart.js -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
 </head>
 <body>
     <?php include 'includes/sidebar.php'; ?>
@@ -46,7 +48,7 @@ $esAdmin = true;
                     <h2 class="text-gray-900 fw-bold mb-1">Resumen General</h2>
                     <p class="text-gray-500 mb-0">Vista rápida del estado del camping</p>
                 </div>
-                <button id="btn-refresh" class="btn btn-outline-primary btn-icon-only shadow-sm" title="Actualizar datos">
+                <button id="btn-refresh" class="btn btn-outline-primary btn-icon-only shadow-sm" title="Actualizar datos" aria-label="Actualizar datos">
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-arrow-clockwise" viewBox="0 0 16 16">
                         <path fill-rule="evenodd" d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z"/>
                         <path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466z"/>
@@ -149,6 +151,7 @@ $esAdmin = true;
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <!-- Dashboard Logic -->
-    <script src="js/dashboard.js"></script>
+    <script src="<?php echo asset('js/utils.js'); ?>"></script>
+    <script src="<?php echo asset('js/dashboard.js'); ?>"></script>
 </body>
 </html>

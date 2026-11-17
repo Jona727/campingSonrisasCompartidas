@@ -1,6 +1,27 @@
 <?php
+ini_set('display_errors', 0);
+error_reporting(E_ALL);
 header('Content-Type: application/json');
+
+require_once __DIR__ . '/seguridad.php';
+iniciar_sesion_segura();
 require_once 'conexion.php';
+
+// Solo usuarios autenticados
+if (!isset($_SESSION['usuario_id'])) {
+    http_response_code(401);
+    echo json_encode(["success" => false, "message" => "No autenticado"]);
+    exit();
+}
+
+// Solo se permite POST (esta acción modifica el inventario)
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    http_response_code(405);
+    echo json_encode(["success" => false, "message" => "Método no permitido"]);
+    exit();
+}
+
+validar_csrf();
 
 // Obtener datos del formulario
 $tipo = $_POST['tipo'] ?? '';

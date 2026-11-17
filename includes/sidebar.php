@@ -42,6 +42,7 @@
             </a>
         </div>
 
+        <?php if ($esAdmin): ?>
         <div class="sidebar-section-title">Otros</div>
         <div class="sidebar-item">
             <a href="reportes.php" class="sidebar-link <?php echo ($paginaActual == 'reportes') ? 'active' : ''; ?>">
@@ -51,6 +52,7 @@
                 Reportes
             </a>
         </div>
+        <?php endif; ?>
 
         <!-- Logout -->
         <div class="sidebar-item" style="margin-top: auto; padding-top: 20px; border-top: 1px solid var(--gray-200);">
@@ -85,14 +87,18 @@
 <div class="sidebar-backdrop d-lg-none" id="sidebarBackdrop" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 999;" onclick="toggleSidebar()"></div>
 
 <script>
-function toggleSidebar() {
+function toggleSidebar(forzarCerrar) {
     const sidebar = document.getElementById('sidebar');
     const backdrop = document.getElementById('sidebarBackdrop');
-    sidebar.classList.toggle('mobile-open');
-    if (sidebar.classList.contains('mobile-open')) {
-        backdrop.style.display = 'block';
-    } else {
-        backdrop.style.display = 'none';
-    }
+    const abrir = forzarCerrar === true ? false : !sidebar.classList.contains('mobile-open');
+
+    sidebar.classList.toggle('mobile-open', abrir);
+    backdrop.style.display = abrir ? 'block' : 'none';
+    document.body.style.overflow = abrir ? 'hidden' : ''; // no scrollear la página de fondo
+    document.querySelector('.mobile-menu-toggle')?.setAttribute('aria-expanded', abrir ? 'true' : 'false');
 }
+
+// Cerrar con la tecla Escape o al tocar un enlace del menú
+document.addEventListener('keydown', e => { if (e.key === 'Escape') toggleSidebar(true); });
+document.querySelectorAll('#sidebar a').forEach(a => a.addEventListener('click', () => toggleSidebar(true)));
 </script>

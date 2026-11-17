@@ -4,11 +4,7 @@ document.getElementById('formulario-ingreso')?.addEventListener('submit', functi
 
     const formData = new FormData(this);
 
-    fetch('php/control_acceso.php', {
-        method: 'POST',
-        body: formData
-    })
-        .then(response => response.json())
+    postSeguro('php/control_acceso.php', formData)
         .then(data => {
             const alerta = document.getElementById('alerta');
             alerta.classList.remove('d-none');
@@ -32,11 +28,7 @@ document.getElementById('reserva-quincho')?.addEventListener('submit', function 
 
     const formData = new FormData(this);
 
-    fetch('php/alquileres_backend.php', {
-        method: 'POST',
-        body: formData
-    })
-        .then(response => response.json())
+    postSeguro('php/alquileres_backend.php', formData)
         .then(data => {
             const alerta = document.getElementById('alerta');
             alerta.classList.remove('d-none');
@@ -60,11 +52,7 @@ document.getElementById('alquiler-reposera')?.addEventListener('submit', functio
 
     const formData = new FormData(this);
 
-    fetch('php/alquileres_backend.php', {
-        method: 'POST',
-        body: formData
-    })
-        .then(response => response.json())
+    postSeguro('php/alquileres_backend.php', formData)
         .then(data => {
             const alerta = document.getElementById('alerta');
             alerta.classList.remove('d-none');

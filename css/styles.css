@@ -967,3 +967,39 @@ body {
     border-bottom: none;
     padding-bottom: 0;
 }
+
+/* ============================================
+   Accesibilidad y experiencia de usuario
+   ============================================ */
+
+/* Foco visible para quien navega con teclado */
+:focus-visible {
+    outline: 3px solid var(--brand-500, #3b82f6);
+    outline-offset: 2px;
+}
+
+/* Respetar la preferencia de "reducir movimiento" del sistema */
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+}
+
+/* Móvil: botones más grandes para tocar con el dedo y menos relleno */
+@media (max-width: 575.98px) {
+    .main-content {
+        padding: 16px 12px;
+    }
+
+    .btn-sm {
+        min-height: 40px;
+        min-width: 40px;
+    }
+
+    .table td, .table th {
+        white-space: nowrap;
+    }
+}

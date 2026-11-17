@@ -33,10 +33,23 @@ CREATE TABLE IF NOT EXISTS entradas (
     usuario_id INT NOT NULL,
     fecha_hora DATETIME DEFAULT CURRENT_TIMESTAMP,
     estado VARCHAR(20) DEFAULT 'activo' COMMENT 'Valores: activo, anulado',
+    anulado_por INT NULL COMMENT 'Usuario que anuló la entrada',
+    fecha_anulacion DATETIME NULL,
     INDEX idx_fecha (fecha_hora),
     INDEX idx_estado (estado),
     INDEX idx_tipo (tipo_entrada),
     FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ============================================
+-- Tabla: login_intentos (límite de intentos de login)
+-- ============================================
+CREATE TABLE IF NOT EXISTS login_intentos (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    ip VARCHAR(45) NOT NULL,
+    usuario VARCHAR(50) NOT NULL,
+    fecha DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_ip_fecha (ip, fecha)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================
@@ -94,5 +107,6 @@ ORDER BY fecha DESC;
 --   Usuario: empleado
 --   Contraseña: emp123
 --
--- IMPORTANTE: Cambia estas contraseñas en producción
+-- IMPORTANTE: Cambiá estas contraseñas ANTES de usar el sistema en producción.
+-- Estas credenciales son públicas (están en el repositorio).
 -- ============================================

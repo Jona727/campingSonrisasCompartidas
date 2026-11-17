@@ -3,7 +3,8 @@ ini_set('display_errors', 0);
 error_reporting(E_ALL);
 header('Content-Type: application/json');
 
-session_start();
+require_once __DIR__ . '/seguridad.php';
+iniciar_sesion_segura();
 require_once 'conexion.php';
 
 // Verificar autenticación
@@ -13,9 +14,12 @@ if (!isset($_SESSION['usuario_id'])) {
     exit();
 }
 
+// Los reportes financieros son solo para el administrador
+requerir_admin_json();
+
 try {
-    $fecha_desde = $_GET['fecha_desde'] ?? date('Y-m-01');
-    $fecha_hasta = $_GET['fecha_hasta'] ?? date('Y-m-d');
+    $fecha_desde = fecha_get('fecha_desde', date('Y-m-01'));
+    $fecha_hasta = fecha_get('fecha_hasta', date('Y-m-d'));
     $tipo = $_GET['tipo'] ?? '';
 
     // Construir query base
@@ -68,10 +72,11 @@ try {
     $stmt->close();
 
 } catch (Exception $e) {
+    error_log(__FILE__ . ': ' . $e->getMessage());
     http_response_code(500);
     echo json_encode([
         'success' => false,
-        'error' => 'Error al obtener reporte: ' . $e->getMessage()
+        'error' => 'Error al obtener reporte'
     ]);
 }
 
