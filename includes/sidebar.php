@@ -42,6 +42,7 @@
             </a>
         </div>
 
+        <?php if ($esAdmin): ?>
         <div class="sidebar-section-title">Otros</div>
         <div class="sidebar-item">
             <a href="reportes.php" class="sidebar-link <?php echo ($paginaActual == 'reportes') ? 'active' : ''; ?>">
@@ -51,6 +52,7 @@
                 Reportes
             </a>
         </div>
+        <?php endif; ?>
 
         <!-- Logout -->
         <div class="sidebar-item" style="margin-top: auto; padding-top: 20px; border-top: 1px solid var(--gray-200);">

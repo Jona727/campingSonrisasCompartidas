@@ -295,9 +295,9 @@ function cargarClima() {
             const widget = document.getElementById('clima-widget');
             widget.innerHTML = `
                 <div class="weather-icon-bounce" style="font-size: 42px; margin-bottom: 8px;">${iconClass}</div>
-                <div class="metric-value mb-0" style="font-size: 32px;">${temp}°C</div>
-                <div class="text-gray-500 fw-medium" style="font-size: 14px; text-transform: capitalize;">${desc}</div>
-                <div class="badge bg-gray-100 text-gray-700 mt-2">💧 ${humidity}% Humedad</div>
+                <div class="metric-value mb-0" style="font-size: 32px;">${escaparHtml(temp)}°C</div>
+                <div class="text-gray-500 fw-medium" style="font-size: 14px; text-transform: capitalize;">${escaparHtml(desc)}</div>
+                <div class="badge bg-gray-100 text-gray-700 mt-2">💧 ${escaparHtml(humidity)}% Humedad</div>
             `;
         })
         .catch(error => {

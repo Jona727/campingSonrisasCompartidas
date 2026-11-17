@@ -3,7 +3,8 @@ ini_set('display_errors', 0);
 error_reporting(E_ALL);
 header('Content-Type: application/json');
 
-session_start();
+require_once __DIR__ . '/seguridad.php';
+iniciar_sesion_segura();
 require_once 'conexion.php';
 
 // Solo usuarios autenticados
@@ -19,6 +20,8 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     echo json_encode(["success" => false, "message" => "Método no permitido"]);
     exit();
 }
+
+validar_csrf();
 
 // Obtener datos del formulario
 $tipo = $_POST['tipo'] ?? '';

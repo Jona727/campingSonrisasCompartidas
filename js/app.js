@@ -20,11 +20,7 @@ document.getElementById('formulario-login')?.addEventListener('submit', function
 
     const formData = new FormData(this);
 
-    fetch('php/login.php', {
-        method: 'POST',
-        body: formData
-    })
-        .then(response => response.json())
+    postSeguro('php/login.php', formData)
         .then(data => {
             alerta.classList.remove('d-none');
 
@@ -84,11 +80,7 @@ document.getElementById('formulario-ingreso')?.addEventListener('submit', functi
 
     const formData = new FormData(this);
 
-    fetch('php/control_acceso.php', {
-        method: 'POST',
-        body: formData
-    })
-        .then(response => response.json())
+    postSeguro('php/control_acceso.php', formData)
         .then(data => {
             const alerta = document.getElementById('alerta');
             alerta.classList.remove('d-none');
@@ -112,11 +104,7 @@ document.getElementById('reserva-quincho')?.addEventListener('submit', function 
 
     const formData = new FormData(this);
 
-    fetch('php/alquileres_backend.php', {
-        method: 'POST',
-        body: formData
-    })
-        .then(response => response.json())
+    postSeguro('php/alquileres_backend.php', formData)
         .then(data => {
             const alerta = document.getElementById('alerta');
             alerta.classList.remove('d-none');
@@ -140,11 +128,7 @@ document.getElementById('alquiler-reposera')?.addEventListener('submit', functio
 
     const formData = new FormData(this);
 
-    fetch('php/alquileres_backend.php', {
-        method: 'POST',
-        body: formData
-    })
-        .then(response => response.json())
+    postSeguro('php/alquileres_backend.php', formData)
         .then(data => {
             const alerta = document.getElementById('alerta');
             alerta.classList.remove('d-none');
@@ -161,3 +145,15 @@ document.getElementById('alquiler-reposera')?.addEventListener('submit', functio
         })
         .catch(error => console.error('Error:', error));
 });
+
+// Si ya hay una sesión iniciada, ir directo al sistema
+if (document.getElementById('formulario-login')) {
+    fetch('php/csrf.php', { credentials: 'same-origin', cache: 'no-store' })
+        .then(r => r.json())
+        .then(d => {
+            if (d.autenticado && d.redirect) {
+                window.location.href = d.redirect;
+            }
+        })
+        .catch(() => { /* sin conexión: se muestra el login normal */ });
+}

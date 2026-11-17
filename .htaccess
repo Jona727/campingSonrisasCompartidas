@@ -1,0 +1,25 @@
+# ============================================
+# Seguridad del servidor (Apache)
+# ============================================
+
+# No listar el contenido de las carpetas
+Options -Indexes
+
+# Cabeceras de seguridad para todos los archivos
+<IfModule mod_headers.c>
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set X-Frame-Options "SAMEORIGIN"
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+    Header always set Permissions-Policy "geolocation=(), microphone=(), camera=()"
+</IfModule>
+
+# Bloquear acceso directo a archivos internos (scripts SQL, documentación, logs, configuración)
+<FilesMatch "(\.(sql|md|log|bak|ini)$|^conexion.*\.php$|^seguridad\.php$|^precios\.php$)">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order allow,deny
+        Deny from all
+    </IfModule>
+</FilesMatch>

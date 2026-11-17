@@ -1,0 +1,8 @@
+# Estos archivos solo se incluyen desde PHP; no deben abrirse directo en el navegador
+<IfModule mod_authz_core.c>
+    Require all denied
+</IfModule>
+<IfModule !mod_authz_core.c>
+    Order allow,deny
+    Deny from all
+</IfModule>

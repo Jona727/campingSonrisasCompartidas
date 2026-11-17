@@ -1,41 +1,48 @@
 <?php
-// Disable HTML error output and set JSON header
+// Registra el ingreso de una persona (una entrada)
 ini_set('display_errors', 0);
 error_reporting(E_ALL);
 header('Content-Type: application/json');
 
-require_once 'conexion.php';
-date_default_timezone_set('America/Argentina/Buenos_Aires');
+require_once __DIR__ . '/seguridad.php';
+iniciar_sesion_segura();
+require_once __DIR__ . '/conexion.php';
+require_once __DIR__ . '/precios.php';
 $conn->query("SET time_zone = '-03:00'");
 
-// Obtener datos del formulario
-$dni = $_POST['dni'] ?? '';
-$tipo_entrada = $_POST['tipo_entrada'] ?? '';
+// Solo usuarios autenticados
+if (!isset($_SESSION['usuario_id'])) {
+    http_response_code(401);
+    echo json_encode(["success" => false, "message" => "No autenticado", "error" => "No autenticado"]);
+    exit();
+}
 
-// Definir precios según tipo de entrada
-$precios = [
-    'turista_adulto' => 8000,
-    'turista_niño' => 4000,
-    'turista_jubilado' => 4800,
-    'local_adulto' => 4000,
-    'local_niño' => 0,
-    'local_jubilado' => 2400,
-    'local' => 3000  // Compatibilidad con registros antiguos
-];
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    http_response_code(405);
+    echo json_encode(["success" => false, "message" => "Método no permitido."]);
+    exit();
+}
 
-// Validar que el tipo de entrada existe
+validar_csrf();
+
+$dni = trim((string)($_POST['dni'] ?? ''));
+$tipo_entrada = (string)($_POST['tipo_entrada'] ?? '');
+
+// El DNI es opcional, pero si viene debe tener entre 6 y 9 dígitos
+if ($dni !== '' && !preg_match('/^\d{6,9}$/', $dni)) {
+    echo json_encode(["success" => false, "message" => "DNI inválido."]);
+    exit();
+}
+
+// El precio SIEMPRE lo define el servidor (nunca se confía en el navegador)
+$precios = precios_entradas();
 if (!isset($precios[$tipo_entrada])) {
     echo json_encode(["success" => false, "message" => "Tipo de entrada inválido."]);
     exit();
 }
-
 $precio = $precios[$tipo_entrada];
+$usuario_id = (int)$_SESSION['usuario_id'];
 
-// Obtener usuario_id de la sesión
-session_start();
-$usuario_id = $_SESSION['usuario_id'] ?? null;
-
-// Insertar datos en la tabla de entradas usando prepared statement
 $sql = "INSERT INTO entradas (tipo_entrada, precio, dni_cliente, usuario_id, estado)
         VALUES (?, ?, ?, ?, 'activo')";
 
@@ -45,9 +52,9 @@ $stmt->bind_param("sdsi", $tipo_entrada, $precio, $dni, $usuario_id);
 if ($stmt->execute()) {
     echo json_encode(["success" => true, "message" => "Ingreso registrado correctamente."]);
 } else {
+    error_log('control_acceso: ' . $stmt->error);
     echo json_encode(["success" => false, "message" => "Error al registrar el ingreso."]);
 }
 
 $stmt->close();
 $conn->close();
-?>

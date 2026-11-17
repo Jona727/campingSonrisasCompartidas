@@ -3,7 +3,8 @@ ini_set('display_errors', 0);
 error_reporting(E_ALL);
 header('Content-Type: application/json');
 
-session_start();
+require_once __DIR__ . '/seguridad.php';
+iniciar_sesion_segura();
 require_once 'conexion.php';
 
 // Verificar autenticación
@@ -20,8 +21,10 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit();
 }
 
+validar_csrf();
+
 try {
-    $entrada_id = $_POST['entrada_id'] ?? null;
+    $entrada_id = filter_var($_POST['entrada_id'] ?? null, FILTER_VALIDATE_INT);
 
     if (!$entrada_id) {
         echo json_encode(["success" => false, "error" => "ID de entrada requerido"]);
@@ -59,12 +62,27 @@ try {
         exit();
     }
 
-    // Anular la entrada (marcar como anulado en lugar de eliminar)
-    $sql_anular = "UPDATE entradas SET estado = 'anulado' WHERE id = ?";
-    $stmt = $conn->prepare($sql_anular);
-    $stmt->bind_param("i", $entrada_id);
+    // Anular la entrada (se marca como anulada, no se elimina) y se registra quién y cuándo
+    $usuario_id = (int)$_SESSION['usuario_id'];
+    $ok = false;
 
-    if ($stmt->execute()) {
+    try {
+        $sql_anular = "UPDATE entradas
+                       SET estado = 'anulado', anulado_por = ?, fecha_anulacion = NOW()
+                       WHERE id = ? AND estado <> 'anulado'";
+        $stmt = $conn->prepare($sql_anular);
+        $stmt->bind_param("ii", $usuario_id, $entrada_id);
+        $ok = $stmt->execute();
+    } catch (Throwable $e) {
+        // La migración 001_seguridad.sql todavía no se ejecutó: anular sin auditoría
+        error_log('anular_entrada (sin auditoría): ' . $e->getMessage());
+        $sql_anular = "UPDATE entradas SET estado = 'anulado' WHERE id = ? AND estado <> 'anulado'";
+        $stmt = $conn->prepare($sql_anular);
+        $stmt->bind_param("i", $entrada_id);
+        $ok = $stmt->execute();
+    }
+
+    if ($ok) {
         echo json_encode([
             "success" => true,
             "message" => "Entrada anulada correctamente"
@@ -79,10 +97,11 @@ try {
     $stmt->close();
 
 } catch (Exception $e) {
+    error_log(__FILE__ . ': ' . $e->getMessage());
     http_response_code(500);
     echo json_encode([
         'success' => false,
-        'error' => 'Error al anular entrada: ' . $e->getMessage()
+        'error' => 'Error al anular entrada'
     ]);
 }
 

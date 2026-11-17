@@ -3,7 +3,8 @@ ini_set('display_errors', 0);
 error_reporting(E_ALL);
 header('Content-Type: application/json');
 
-session_start();
+require_once __DIR__ . '/seguridad.php';
+iniciar_sesion_segura();
 require_once 'conexion.php';
 date_default_timezone_set('America/Argentina/Buenos_Aires');
 $conn->query("SET time_zone = '-03:00'");
@@ -43,10 +44,11 @@ try {
     ]);
 
 } catch (Exception $e) {
+    error_log(__FILE__ . ': ' . $e->getMessage());
     http_response_code(500);
     echo json_encode([
         'success' => false,
-        'error' => 'Error al obtener entradas: ' . $e->getMessage()
+        'error' => 'Error al obtener entradas'
     ]);
 }
 

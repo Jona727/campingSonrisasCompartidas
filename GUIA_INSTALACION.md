@@ -25,7 +25,17 @@
 mysql -u tu_usuario -p < database_setup.sql
 ```
 
+### Si ya tenías el sistema instalado (actualización)
+
+Ejecutá **una sola vez** el archivo `migraciones/001_seguridad.sql` (phpMyAdmin → pestaña SQL).
+Crea la tabla de intentos de login y las columnas que registran quién anuló cada entrada.
+Sin esta migración el sistema sigue funcionando, pero sin límite de intentos ni auditoría de anulaciones.
+
 ## 🔧 Paso 2: Configurar la Conexión
+
+> `php/conexion.php` **no se sube a git** (contiene tus claves). Si instalás desde el repositorio,
+> copiá `php/conexion.ejemplo.php` como `php/conexion.php` y completá tus datos.
+
 
 1. Abre el archivo `php/conexion.php`
 2. Modifica estos valores según los datos de tu hosting:

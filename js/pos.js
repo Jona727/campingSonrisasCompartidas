@@ -58,15 +58,8 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
-const precios = {
-    'turista_adulto': 8000,
-    'turista_niño': 4000,
-    'turista_jubilado': 4800,
-    'local_adulto': 4000,
-    'local_niño': 0,
-    'local_jubilado': 2400,
-    'local': 3000
-};
+// Los precios los define el servidor (php/precios.php) y llegan en window.PRECIOS
+const precios = window.PRECIOS || {};
 
 const nombres = {
     'turista_adulto': 'No Residente (Adulto)',
@@ -155,7 +148,7 @@ function actualizarCarrito() {
         html += `
             <div class="entrada-item">
                 <div class="entrada-item-info">
-                    <div style="font-weight: 600; color: var(--gray-900);">${item.nombre}</div>
+                    <div style="font-weight: 600; color: var(--gray-900);">${escaparHtml(item.nombre)}</div>
                     <div style="font-size: 14px; color: var(--gray-600);">
                         ${item.cantidad} x $${precio.toLocaleString('es-AR')} = $${subtotal.toLocaleString('es-AR')}
                     </div>
@@ -219,12 +212,7 @@ document.getElementById('btn-registrar')?.addEventListener('click', async functi
                 formData.append('dni', ''); // Sin DNI
                 formData.append('edad', 0); // Edad por defecto
 
-                promesas.push(
-                    fetch('php/control_acceso.php', {
-                        method: 'POST',
-                        body: formData
-                    }).then(r => r.json())
-                );
+                promesas.push(postSeguro('php/control_acceso.php', formData));
             }
         }
 
@@ -306,7 +294,7 @@ document.getElementById('btn-imprimir')?.addEventListener('click', function() {
    CAMPING SONRISAS COMPARTIDAS
 ----------------------------
 Ticket #${ticketNum}
-Tipo: ${nombresTipos[item.tipo] || item.nombre}
+Tipo: ${escaparHtml(nombresTipos[item.tipo] || item.nombre)}
 
 Fecha: ${fechaFormateada}
 Hora: ${horaFormateada}
@@ -415,9 +403,9 @@ async function cargarUltimasEntradas() {
 
             html += `
                 <tr>
-                    <td>${entrada.hora}</td>
-                    <td>${nombreTipo}</td>
-                    <td>$${entrada.precio.toLocaleString('es-AR')}</td>
+                    <td>${escaparHtml(entrada.hora)}</td>
+                    <td>${escaparHtml(nombreTipo)}</td>
+                    <td>$${Number(entrada.precio).toLocaleString('es-AR')}</td>
                     <td>${estadoBadge}</td>
                     <td>${botones}</td>
                 </tr>
@@ -451,18 +439,13 @@ async function anularEntrada(entradaId) {
         const formData = new FormData();
         formData.append('entrada_id', entradaId);
 
-        const response = await fetch('php/anular_entrada.php', {
-            method: 'POST',
-            body: formData
-        });
-
-        const result = await response.json();
+        const result = await postSeguro('php/anular_entrada.php', formData);
 
         if (result.success) {
             mostrarAlerta('Entrada anulada correctamente', 'success');
             cargarUltimasEntradas(); // Recargar la lista
         } else {
-            mostrarAlerta('Error: ' + result.error, 'danger');
+            mostrarAlerta('Error: ' + (result.error || result.message || 'No se pudo anular'), 'danger');
         }
 
     } catch (error) {
@@ -508,8 +491,8 @@ function reimprimirTicket(entradaId) {
     COMPARTIDAS
 =============================
 
-Entrada #${entrada.id}
-${nombreTipo}
+Entrada #${Number(entrada.id)}
+${escaparHtml(nombreTipo)}
 
 Fecha: ${fechaFormateada}
 Hora: ${horaFormateada}

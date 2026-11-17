@@ -1,5 +1,6 @@
 <?php
-session_start();
+require_once __DIR__ . '/php/seguridad.php';
+iniciar_sesion_segura();
 
 if (!isset($_SESSION['usuario_id'])) {
     header("Location: login.html");
@@ -21,6 +22,7 @@ $esAdmin = true;
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="<?php echo htmlspecialchars(csrf_token(), ENT_QUOTES, 'UTF-8'); ?>">
     <title>Dashboard - Camping Sonrisas</title>
     <!-- Google Fonts: Outfit -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -149,6 +151,7 @@ $esAdmin = true;
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <!-- Dashboard Logic -->
+    <script src="js/utils.js"></script>
     <script src="js/dashboard.js"></script>
 </body>
 </html>

@@ -104,7 +104,7 @@ function actualizarReporteEntradas(data) {
         breakdownHTML += `
             <div class="breakdown-item">
                 <div>
-                    <div style="font-weight: 600;">${nombre}: ${datos.cantidad}</div>
+                    <div style="font-weight: 600;">${escaparHtml(nombre)}: ${Number(datos.cantidad)}</div>
                     <div style="font-size: 12px; color: var(--gray-400);">($${formatearPrecio(datos.precio_unitario)})</div>
                 </div>
                 <div style="font-weight: 700; color: var(--success-500);">$${formatearPrecio(datos.total)}</div>
@@ -520,9 +520,9 @@ async function imprimirReporteFinanciero() {
         <div class="subtitulo">Camping Sonrisas Compartidas</div>
         <div class="separador"></div>
         <div class="campo" style="text-align: center;">PERIODO:</div>
-        <div class="campo" style="text-align: center; font-weight: bold;">${fechaDesde}</div>
+        <div class="campo" style="text-align: center; font-weight: bold;">${escaparHtml(fechaDesde)}</div>
         <div class="campo" style="text-align: center; font-weight: bold;">a</div>
-        <div class="campo" style="text-align: center; font-weight: bold;">${fechaHasta}</div>
+        <div class="campo" style="text-align: center; font-weight: bold;">${escaparHtml(fechaHasta)}</div>
         <div class="separador"></div>
         <div class="campo" style="text-align: center;">Total de Entradas:</div>
         <div class="valor-grande">${totalEntradas}</div>
@@ -591,9 +591,9 @@ async function imprimirReporteEntradas() {
             <div class="subtitulo">Camping Sonrisas</div>
             <div class="separador"></div>
             <div class="campo-vertical" style="text-align: center;">PERIODO:</div>
-            <div class="valor-vertical" style="text-align: center;">${fechaDesde}</div>
+            <div class="valor-vertical" style="text-align: center;">${escaparHtml(fechaDesde)}</div>
             <div class="valor-vertical" style="text-align: center;">a</div>
-            <div class="valor-vertical" style="text-align: center;">${fechaHasta}</div>
+            <div class="valor-vertical" style="text-align: center;">${escaparHtml(fechaHasta)}</div>
             <div class="separador"></div>
             <div class="campo-vertical">Total Ingresos:</div>
             <div class="valor-vertical">$${formatearPrecio(result.data.totales.total)}</div>
