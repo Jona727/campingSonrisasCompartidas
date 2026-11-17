@@ -11,8 +11,12 @@ document.addEventListener('DOMContentLoaded', function () {
     cargarClima();
 
     // Auto-update intervals
-    setInterval(cargarEstadisticas, 30000); // 30s
-    setInterval(cargarClima, 600000); // 10m
+    // (se pausan mientras la pestaña está en segundo plano para ahorrar datos y batería)
+    setInterval(() => { if (!document.hidden) cargarEstadisticas(); }, 30000); // 30s
+    setInterval(() => { if (!document.hidden) cargarClima(); }, 600000); // 10m
+    document.addEventListener('visibilitychange', () => {
+        if (!document.hidden) cargarEstadisticas(); // al volver, actualizar enseguida
+    });
 
     // Manual Refresh Button Handler
     document.getElementById('btn-refresh')?.addEventListener('click', function () {
@@ -30,8 +34,7 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 
 function cargarEstadisticas() {
-    return fetch('php/dashboard_stats.php')
-        .then(response => response.json())
+    return fetchJson('php/dashboard_stats.php')
         .then(result => {
             if (result.success) {
                 actualizarDashboard(result.data);
@@ -272,8 +275,12 @@ function actualizarGraficoHoras(horasData) {
 }
 
 function cargarClima() {
-    return fetch('https://wttr.in/El_Pingo,Entre_Rios?format=j1')
+    // Si el servicio del clima no responde en 6 segundos, se muestra "no disponible"
+    const control = new AbortController();
+    const corte = setTimeout(() => control.abort(), 6000);
+    return fetch('https://wttr.in/El_Pingo,Entre_Rios?format=j1', { signal: control.signal })
         .then(response => response.json())
+        .finally(() => clearTimeout(corte))
         .then(data => {
             const current = data.current_condition[0];
             const temp = current.temp_C;

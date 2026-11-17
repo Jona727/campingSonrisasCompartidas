@@ -199,3 +199,13 @@ function login_limpiar_fallos(mysqli $conn): void
         error_log('login_limpiar_fallos: ' . $e->getMessage());
     }
 }
+
+// ---------- Archivos estáticos ----------
+
+// Devuelve la ruta con ?v=<fecha de modificación>: el navegador cachea el archivo
+// y solo lo vuelve a descargar cuando cambia.
+function asset(string $ruta): string
+{
+    $archivo = __DIR__ . '/../' . $ruta;
+    return $ruta . '?v=' . (is_file($archivo) ? filemtime($archivo) : time());
+}

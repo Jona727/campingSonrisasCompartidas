@@ -28,7 +28,7 @@ $esAdmin = (isset($_SESSION['rol']) && $_SESSION['rol'] === 'administrador');
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Estilos personalizados -->
-    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="<?php echo asset('css/styles.css'); ?>">
     <style>
         @media print {
             @page {
@@ -169,7 +169,7 @@ $esAdmin = (isset($_SESSION['rol']) && $_SESSION['rol'] === 'administrador');
                                     <span id="total-items">0</span> items
                                 </p>
                             </div>
-                            <button id="btn-limpiar" class="btn btn-sm btn-light text-danger fw-medium" style="display: none;">
+                            <button id="btn-limpiar" type="button" class="btn btn-sm btn-light text-danger fw-medium" style="display: none;">
                                 Vaciar
                             </button>
                         </div>
@@ -214,7 +214,7 @@ $esAdmin = (isset($_SESSION['rol']) && $_SESSION['rol'] === 'administrador');
                     <div class="card border-0 shadow-sm" style="border-radius: 20px;">
                         <div class="card-header bg-white border-bottom-0 pt-4 px-4 pb-0 d-flex justify-content-between align-items-center rounded-top-4">
                             <h3 class="card-title fw-bold text-gray-900 mb-0">Últimas Ventas</h3>
-                            <button class="btn btn-sm btn-icon-only btn-light text-primary" onclick="cargarUltimasEntradas()" title="Actualizar">
+                            <button class="btn btn-sm btn-icon-only btn-light text-primary" onclick="cargarUltimasEntradas()" title="Actualizar" aria-label="Actualizar últimas entradas">
                                 <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
                                 </svg>
@@ -292,8 +292,8 @@ $esAdmin = (isset($_SESSION['rol']) && $_SESSION['rol'] === 'administrador');
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script>window.PRECIOS = <?php echo json_encode(precios_entradas(), JSON_UNESCAPED_UNICODE); ?>;</script>
-    <script src="js/utils.js"></script>
-    <script src="js/pos.js"></script>
+    <script src="<?php echo asset('js/utils.js'); ?>"></script>
+    <script src="<?php echo asset('js/pos.js'); ?>"></script>
     <script>
         // Helper inline para selección de tarifa rápida
         function seleccionarTarifa(tipo) {

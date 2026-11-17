@@ -35,6 +35,9 @@ document.getElementById('formulario-login')?.addEventListener('submit', function
             } else {
                 alerta.textContent = data.message;
                 alerta.classList.add('alert-danger');
+                // Dejar el cursor listo para reintentar la contraseña
+                const campoClave = document.getElementById('contraseña');
+                if (campoClave) { campoClave.value = ''; campoClave.focus(); }
 
                 // Reset Loading State
                 btn.disabled = false;

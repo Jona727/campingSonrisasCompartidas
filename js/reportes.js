@@ -22,8 +22,7 @@ document.addEventListener('DOMContentLoaded', function() {
 // Cargar métricas superiores
 async function cargarMetricasSuperiores() {
     try {
-        const response = await fetch('php/dashboard_stats.php');
-        const result = await response.json();
+        const result = await fetchJson('php/dashboard_stats.php');
 
         if (result.success) {
             const data = result.data;
@@ -41,6 +40,7 @@ async function cargarMetricasSuperiores() {
 async function buscarEntradas() {
     const fechaDesde = document.getElementById('fecha-desde-entradas').value;
     const fechaHasta = document.getElementById('fecha-hasta-entradas').value;
+    if (!rangoFechasValido(fechaDesde, fechaHasta)) return;
     const tipoEntrada = document.getElementById('filtro-tipo-entrada').value;
 
     try {
@@ -50,12 +50,13 @@ async function buscarEntradas() {
             tipo: tipoEntrada
         });
 
-        const response = await fetch(`php/reportes_entradas.php?${params}`);
-        const result = await response.json();
+        const result = await fetchJson(`php/reportes_entradas.php?${params}`);
 
         if (result.success) {
             datosActuales = result.data;
             actualizarReporteEntradas(result.data);
+        } else {
+            mostrarToast(result.error || 'No se pudieron cargar las entradas.', 'danger');
         }
     } catch (error) {
         console.error('Error al buscar entradas:', error);
@@ -195,6 +196,7 @@ function actualizarGraficoEntradas(porTipo) {
 async function generarReporteFinanciero() {
     const fechaDesde = document.getElementById('fecha-desde-financiero').value;
     const fechaHasta = document.getElementById('fecha-hasta-financiero').value;
+    if (!rangoFechasValido(fechaDesde, fechaHasta)) return;
 
     try {
         const params = new URLSearchParams({
@@ -202,8 +204,7 @@ async function generarReporteFinanciero() {
             fecha_hasta: fechaHasta
         });
 
-        const response = await fetch(`php/reporte_financiero.php?${params}`);
-        const result = await response.json();
+        const result = await fetchJson(`php/reporte_financiero.php?${params}`);
 
         if (result.success) {
             document.getElementById('total-entradas-fin').textContent = result.data.total_entradas || 0;
@@ -214,10 +215,12 @@ async function generarReporteFinanciero() {
             if (btnPDF) {
                 btnPDF.style.display = 'block';
             }
+        } else {
+            mostrarToast(result.error || 'No se pudo generar el reporte.', 'danger');
         }
     } catch (error) {
         console.error('Error al generar reporte financiero:', error);
-        alert('Error al generar el reporte: ' + error.message);
+        mostrarToast('No se pudo generar el reporte. Revisá las fechas e intentá de nuevo.', 'danger');
     }
 }
 
@@ -225,6 +228,7 @@ async function generarReporteFinanciero() {
 async function exportarPDFFinanciero() {
     const fechaDesde = document.getElementById('fecha-desde-financiero').value;
     const fechaHasta = document.getElementById('fecha-hasta-financiero').value;
+    if (!rangoFechasValido(fechaDesde, fechaHasta)) return;
 
     try {
         const params = new URLSearchParams({
@@ -232,11 +236,10 @@ async function exportarPDFFinanciero() {
             fecha_hasta: fechaHasta
         });
 
-        const response = await fetch(`php/reporte_financiero.php?${params}`);
-        const result = await response.json();
+        const result = await fetchJson(`php/reporte_financiero.php?${params}`);
 
         if (!result.success) {
-            alert('Error al generar el reporte');
+            mostrarToast(result.error || 'No se pudo generar el reporte.', 'danger');
             return;
         }
 
@@ -338,7 +341,7 @@ async function exportarPDFFinanciero() {
 
     } catch (error) {
         console.error('Error al exportar PDF financiero:', error);
-        alert('Error al generar el PDF');
+        mostrarToast('No se pudo generar el PDF. Intentá de nuevo.', 'danger');
     }
 }
 
@@ -346,6 +349,7 @@ async function exportarPDFFinanciero() {
 async function exportarPDF() {
     const fechaDesde = document.getElementById('fecha-desde-entradas').value;
     const fechaHasta = document.getElementById('fecha-hasta-entradas').value;
+    if (!rangoFechasValido(fechaDesde, fechaHasta)) return;
 
     try {
         // Obtener datos detallados por fecha
@@ -354,11 +358,10 @@ async function exportarPDF() {
             fecha_hasta: fechaHasta
         });
 
-        const response = await fetch(`php/reporte_pdf.php?${params}`);
-        const result = await response.json();
+        const result = await fetchJson(`php/reporte_pdf.php?${params}`);
 
         if (!result.success) {
-            alert('Error al generar el reporte');
+            mostrarToast(result.error || 'No se pudo generar el reporte.', 'danger');
             return;
         }
 
@@ -481,7 +484,7 @@ async function exportarPDF() {
 
     } catch (error) {
         console.error('Error al exportar PDF:', error);
-        alert('Error al generar el PDF');
+        mostrarToast('No se pudo generar el PDF. Intentá de nuevo.', 'danger');
     }
 }
 
@@ -545,6 +548,7 @@ async function imprimirReporteFinanciero() {
 async function imprimirReporteEntradas() {
     const fechaDesde = document.getElementById('fecha-desde-entradas').value;
     const fechaHasta = document.getElementById('fecha-hasta-entradas').value;
+    if (!rangoFechasValido(fechaDesde, fechaHasta)) return;
 
     try {
         const params = new URLSearchParams({
@@ -552,11 +556,10 @@ async function imprimirReporteEntradas() {
             fecha_hasta: fechaHasta
         });
 
-        const response = await fetch(`php/reporte_pdf.php?${params}`);
-        const result = await response.json();
+        const result = await fetchJson(`php/reporte_pdf.php?${params}`);
 
         if (!result.success) {
-            alert('Error al generar el reporte');
+            mostrarToast(result.error || 'No se pudo generar el reporte.', 'danger');
             return;
         }
 
@@ -612,6 +615,6 @@ async function imprimirReporteEntradas() {
 
     } catch (error) {
         console.error('Error al imprimir reporte:', error);
-        alert('Error al generar el reporte para impresión');
+        mostrarToast('No se pudo preparar el reporte para imprimir.', 'danger');
     }
 }

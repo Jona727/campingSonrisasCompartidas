@@ -1,6 +1,7 @@
 // Sistema de Punto de Venta
 let carrito = [];
 let entradaIdAAnular = null; // ID de entrada a anular
+let ventaEnCurso = false; // true mientras se registra una venta
 let entradasDelDia = []; // Almacenar entradas del día para reimprimir
 
 // Función para bloquear la interfaz después de registrar venta
@@ -79,14 +80,11 @@ document.getElementById('formulario-agregar')?.addEventListener('submit', functi
     const cantidad = parseInt(document.getElementById('cantidad').value);
 
     // Debug: verificar que el tipo existe
-    console.log('Tipo entrada:', tipoEntrada);
-    console.log('Precio encontrado:', precios[tipoEntrada]);
-    console.log('Nombre encontrado:', nombres[tipoEntrada]);
 
     // Validar que el precio existe
     if (precios[tipoEntrada] === undefined) {
         console.error('Precio no encontrado para tipo:', tipoEntrada);
-        alert('Error: Tipo de entrada no válido');
+        mostrarToast('Tipo de entrada no válido.', 'danger');
         return;
     }
 
@@ -154,7 +152,7 @@ function actualizarCarrito() {
                     </div>
                 </div>
                 <div class="entrada-item-actions">
-                    <button class="btn btn-sm btn-outline-danger" onclick="eliminarDelCarrito(${index})">
+                    <button class="btn btn-sm btn-outline-danger" onclick="eliminarDelCarrito(${index})" aria-label="Quitar ${escaparHtml(item.nombre)} del carrito">
                         <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
                         </svg>
@@ -178,8 +176,13 @@ function eliminarDelCarrito(index) {
 }
 
 // Limpiar carrito
-document.getElementById('btn-limpiar')?.addEventListener('click', function() {
-    if (confirm('¿Está seguro de limpiar el carrito?')) {
+document.getElementById('btn-limpiar')?.addEventListener('click', async function() {
+    const ok = await confirmarAccion({
+        titulo: 'Vaciar carrito',
+        mensaje: '¿Querés quitar todas las entradas del carrito?',
+        textoConfirmar: 'Sí, vaciar'
+    });
+    if (ok) {
         carrito = [];
         actualizarCarrito();
         document.getElementById('btn-imprimir').style.display = 'none';
@@ -193,13 +196,17 @@ document.getElementById('btn-limpiar')?.addEventListener('click', function() {
 // Registrar venta
 document.getElementById('btn-registrar')?.addEventListener('click', async function() {
     if (carrito.length === 0) {
-        alert('El carrito está vacío');
+        mostrarToast('El carrito está vacío. Agregá al menos una entrada.', 'warning');
         return;
     }
 
+    if (ventaEnCurso) return; // evita doble clic
+    ventaEnCurso = true;
+
     const btn = this;
     btn.disabled = true;
-    btn.innerHTML = 'Procesando...';
+    btn.setAttribute('aria-busy', 'true');
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>Procesando...';
 
     try {
         // Registrar cada entrada en la base de datos
@@ -217,6 +224,7 @@ document.getElementById('btn-registrar')?.addEventListener('click', async functi
         }
 
         const resultados = await Promise.all(promesas);
+        const registradas = resultados.filter(r => r.success).length;
 
         // Verificar si todos fueron exitosos
         const todosExitosos = resultados.every(r => r.success);
@@ -236,13 +244,20 @@ document.getElementById('btn-registrar')?.addEventListener('click', async functi
             // Actualizar lista de últimas entradas
             cargarUltimasEntradas();
         } else {
-            mostrarAlerta('Hubo un error al registrar algunas entradas', 'danger');
+            mostrarAlerta(
+                `Solo se registraron ${registradas} de ${resultados.length} entradas. ` +
+                'Revisá la lista de "Últimas entradas" antes de reintentar para no duplicar ventas.',
+                'danger'
+            );
+            cargarUltimasEntradas();
         }
     } catch (error) {
         console.error('Error:', error);
         mostrarAlerta('Error de conexión al registrar la venta', 'danger');
     } finally {
+        ventaEnCurso = false;
         btn.disabled = false;
+        btn.removeAttribute('aria-busy');
         btn.innerHTML = `
             <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"
                  style="display: inline-block; vertical-align: middle; margin-right: 8px;">
@@ -346,10 +361,8 @@ function mostrarAlerta(mensaje, tipo) {
 // Cargar últimas entradas del día
 async function cargarUltimasEntradas() {
     try {
-        const response = await fetch('php/obtener_entradas_hoy.php');
-        const result = await response.json();
+        const result = await fetchJson('php/obtener_entradas_hoy.php');
 
-        console.log('Resultado obtener_entradas_hoy:', result);
 
         const tbody = document.getElementById('tabla-ultimas-entradas');
 
@@ -367,7 +380,6 @@ async function cargarUltimasEntradas() {
 
         // Guardar entradas en variable global para reimprimir
         entradasDelDia = result.data;
-        console.log('Entradas del día guardadas:', entradasDelDia);
 
         const nombresTipos = {
             'turista_adulto': 'No Residente (Adulto)',
@@ -388,12 +400,12 @@ async function cargarUltimasEntradas() {
 
             const botones = entrada.estado === 'activo'
                 ? `<div class="d-flex gap-1">
-                       <button class="btn btn-sm btn-outline-primary" onclick="reimprimirTicket(${entrada.id})" title="Reimprimir">
+                       <button class="btn btn-sm btn-outline-primary" onclick="reimprimirTicket(${entrada.id})" title="Reimprimir" aria-label="Reimprimir ticket">
                            <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
                            </svg>
                        </button>
-                       <button class="btn btn-sm btn-outline-danger" onclick="confirmarAnular(${entrada.id})" title="Anular">
+                       <button class="btn btn-sm btn-outline-danger" onclick="confirmarAnular(${entrada.id})" title="Anular" aria-label="Anular entrada">
                            <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                            </svg>
@@ -456,13 +468,10 @@ async function anularEntrada(entradaId) {
 
 // Reimprimir ticket de una entrada
 function reimprimirTicket(entradaId) {
-    console.log('reimprimirTicket llamado con ID:', entradaId);
-    console.log('entradasDelDia disponibles:', entradasDelDia);
 
     // Buscar la entrada en el array
     const entrada = entradasDelDia.find(e => e.id == entradaId);
 
-    console.log('Entrada encontrada:', entrada);
 
     if (!entrada) {
         console.error('No se encontró la entrada con ID:', entradaId);

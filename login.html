@@ -20,7 +20,7 @@
         <div class="container">
             <div class="row justify-content-center">
                 <div class="col-md-5 col-lg-4">
-                    <div id="alerta" class="alert d-none mb-4 shadow-sm border-0" role="alert"></div>
+                    <div id="alerta" class="alert d-none mb-4 shadow-sm border-0" role="alert" aria-live="assertive"></div>
 
                     <div class="glass-card">
                         <div class="auth-header text-center">
@@ -32,7 +32,7 @@
                                 <div class="modern-input-group">
                                     <label for="usuario">Usuario</label>
                                     <input type="text" class="form-control form-control-lg" id="usuario" name="usuario"
-                                        placeholder="ej. admin" required autocomplete="username">
+                                        placeholder="ej. admin" required autocomplete="username" autofocus>
                                 </div>
                                 <div class="modern-input-group">
                                     <label for="contraseña">Contraseña</label>
